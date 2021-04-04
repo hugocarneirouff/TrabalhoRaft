@@ -78,10 +78,12 @@ func (rf *Raft) GetState() (int, bool) {
 func (rf *Raft) AppendEntries(term int, leaderId int, prevLogIndex int, prevLogTerm int, entries []int, leaderCommit int) {
 	var success bool
 	var currentTerm = rf.currentTerm
+	// Reply false if term < currentTerm (§5.1)
 	if (term != currentTerm) success = false
-
-
-	return term, success
+	// Reply false if log doesn’t contain an entry at prevLogIndex whose term matches prevLogTerm (§5.3)
+	if (rf.log[prevLogIndex] != prevLogTerm) success = false
+	// etc etc
+	return currentTerm, success
 }
 
 //
