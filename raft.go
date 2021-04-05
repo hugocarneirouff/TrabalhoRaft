@@ -68,7 +68,7 @@ func (rf *Raft) GetState() (int, bool) {
 	var isleader bool
 
 	term = rf.currentTerm
-	
+
 	// Your code here (2A).
 	return term, isleader
 }
@@ -122,7 +122,10 @@ func (rf *Raft) readPersist(data []byte) {
 // field names must start with capital letters!
 //
 type RequestVoteArgs struct {
-	// Your data here (2A, 2B).
+	term int
+	candidateId int
+	lastLogIndex int
+	lasLogTerm int
 }
 
 //
@@ -130,7 +133,8 @@ type RequestVoteArgs struct {
 // field names must start with capital letters!
 //
 type RequestVoteReply struct {
-	// Your data here (2A).
+	term int
+	voteGranted bool
 }
 
 //
