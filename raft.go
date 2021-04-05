@@ -125,7 +125,7 @@ type RequestVoteArgs struct {
 	term int
 	candidateId int
 	lastLogIndex int
-	lasLogTerm int
+	lastLogTerm int
 }
 
 //
@@ -141,7 +141,18 @@ type RequestVoteReply struct {
 // example RequestVote RPC handler.
 //
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
-	// Your code here (2A, 2B).
+	reply.term = rf.currentTerm
+	if args.term < reply.term{
+		reply.voteGranted = false
+		return reply
+	}
+	if rf.votedFor == nil or rf.votedFor == args.candidateId{
+		if args.lastLogIndex == rf.commitIndex{
+			reply.voteGranted = true
+			return reply
+		}
+	}
+	//Agora eu preciso do term do server que eu to pedindo voto
 }
 
 //
@@ -174,6 +185,10 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 // the struct itself.
 //
 func (rf *Raft) sendRequestVote(server int, args *RequestVoteArgs, reply *RequestVoteReply) bool {
+	args.term = rf.currentTerm
+	args.candidateId = rf.me
+	args.lastLogIndex = rf.commitIndex
+	args.lastLogTerm = rf.lastApplied
 	ok := rf.peers[server].Call("Raft.RequestVote", args, reply)
 	return ok
 }
