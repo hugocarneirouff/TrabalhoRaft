@@ -122,10 +122,10 @@ func (rf *Raft) readPersist(data []byte) {
 // field names must start with capital letters!
 //
 type RequestVoteArgs struct {
-	term int
-	candidateId int
-	lastLogIndex int
-	lastLogTerm int
+	Term int
+	CandidateId int
+	LastLogIndex int
+	LastLogTerm int
 }
 
 //
@@ -133,23 +133,20 @@ type RequestVoteArgs struct {
 // field names must start with capital letters!
 //
 type RequestVoteReply struct {
-	term int
-	voteGranted bool
+	Term int
+	VoteGranted bool
 }
 
 //
 // example RequestVote RPC handler.
 //
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
-	reply.term = rf.currentTerm
-	if args.term < reply.term{
-		reply.voteGranted = false
-		return reply
+	if args.Term < reply.Term{
+		reply.VoteGranted = false
 	}
-	if rf.votedFor == nil or rf.votedFor == args.candidateId{
-		if args.lastLogIndex == rf.commitIndex{
-			reply.voteGranted = true
-			return reply
+	if rf.votedFor == nil or rf.votedFor == args.CandidateId{
+		if args.LastLogIndex == rf.commitIndex{
+			reply.VoteGranted = true
 		}
 	}
 	//Agora eu preciso do term do server que eu to pedindo voto
@@ -185,10 +182,6 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 // the struct itself.
 //
 func (rf *Raft) sendRequestVote(server int, args *RequestVoteArgs, reply *RequestVoteReply) bool {
-	args.term = rf.currentTerm
-	args.candidateId = rf.me
-	args.lastLogIndex = rf.commitIndex
-	args.lastLogTerm = rf.lastApplied
 	ok := rf.peers[server].Call("Raft.RequestVote", args, reply)
 	return ok
 }
