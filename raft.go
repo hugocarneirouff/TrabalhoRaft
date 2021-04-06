@@ -47,7 +47,7 @@ type Raft struct {
 	peers     []*labrpc.ClientEnd // RPC end points of all peers
 	persister *Persister          // Object to hold this peer's persisted state
 	me        int                 // this peer's index into peers[]
-	
+
 	// Persistent state on all servers
 	currentTerm int
 	votedFor    int
@@ -57,27 +57,27 @@ type Raft struct {
 	// Volatile state on leaders
 	nextIndex   []int
 	matchIndex  []int
-	
+
 	state 		int // 0-Seguidor;1-Candidato;2-Líder
-	
+
 	log 	    []int
 	// Your data here (2A, 2B, 2C).
 	// Look at the paper's Figure 2 for a description of what
 	// state a Raft server must maintain.
-	
+
 }
 
 // return currentTerm and whether this server
 // believes it is the leader.
 func (rf *Raft) GetState() (int, bool) {
-	
+
 	// Your code here (2A).
 	var term int
 	var isleader bool
-	
+
 	term = rf.currentTerm
 	isleader = rf.state == 2
-	
+
 	return term, isleader
 }
 
@@ -97,13 +97,13 @@ func (rf *Raft) AppendEntries(term int, leaderId int, prevLogIndex int, prevLogT
 	success = false
 	} else {
 		success = true
-		
+
 		if len(entries) > 0 {
 			for i:=0;i<len(entries);i++{
 				rf.log = append(rf.log[:prevLogIndex+i+1], entries[i])
 			}
 		}
-		
+
 		if rf.commitIndex < leaderCommit {
 			if leaderCommit < len(rf.log)-1 {
 			rf.commitIndex = leaderCommit
@@ -111,7 +111,7 @@ func (rf *Raft) AppendEntries(term int, leaderId int, prevLogIndex int, prevLogT
 				rf.commitIndex = len(rf.log)-1
 			}
 		}
-		
+
 	}
 	return cTerm, success
 }
@@ -171,15 +171,15 @@ type RequestVoteReply struct {
 // example RequestVote RPC handler.
 //
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
-	
+
 	reply.Term = rf.currentTerm
-	
+
 	var oldCandidate bool
 	if args.LastLogTerm != rf.log[len(rf.log)-1] {
 		oldCandidate = args.LastLogTerm < rf.log[len(rf.log)-1]
 	}
 	oldCandidate = args.LastLogIndex < len(rf.log)-1
-	
+
 	if reply.Term <= args.Term && !oldCandidate {
 		rf.state = 0
 		rf.currentTerm = args.Term
@@ -188,7 +188,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	} else {
 		reply.VoteGranted = false
 	}
-	
+
 }
 
 //
@@ -242,9 +242,9 @@ func (rf *Raft) Start(command interface{}) (int, int, bool) {
 	index := -1
 	term := -1
 	isLeader := true
-	
+
 	// Your code here (2B).
-	
+
 	return index, term, isLeader
 }
 
@@ -279,19 +279,19 @@ persister *Persister, applyCh chan ApplyMsg) *Raft {
 	rf.peers = peers
 	rf.persister = persister
 	rf.me = me
-	
+
 	// Your initialization code here (2A, 2B, 2C).
 	rf.state = 0
 	rf.currentTerm = 0
 	rf.votedFor = -1
 	rf.lastApplied = 0
   	rf.currentTerm = 0
-	
+
 	rf.log = []int{rf.currentTerm}
-	
+
 	// initialize from state persisted before a crash
 	rf.readPersist(persister.ReadRaftState())
-	
+
 	go func() {
 		for {
 			for rf.commitIndex > rf.lastApplied {
@@ -300,27 +300,27 @@ persister *Persister, applyCh chan ApplyMsg) *Raft {
 			time.Sleep(50 * time.Millisecond)
 		}
 	}()
-	
+
 	go func() {
 		for {
-			if rf.state == 0 { 
+			if rf.state == 0 {
 				rf.state = 1
 			}
 			duration := time.Duration(400 +	Random(-400, 400))
 			time.Sleep(duration * time.Millisecond)
-			
+
 			if rf.state == 1 {
 				counter := 0
 				logLen := len(rf.log)
 				lastTerm := 0
 				lastIndex := logLen-1
-				requestTerm := rf.currentTerm
+				requestTerm := rf.currentTerm + 1
 				if logLen > 0 {
 					lastTerm = rf.log[logLen-1]
 				}
 				rvArgs := RequestVoteArgs{requestTerm, rf.me, lastIndex, lastTerm}
 				rvReplies := make([]RequestVoteReply, len(rf.peers))
-				
+
 				for index := range rf.peers {
 					go func(index int) {
 						ok := rf.sendRequestVote(index, &rvArgs, &rvReplies[index])
@@ -345,6 +345,6 @@ persister *Persister, applyCh chan ApplyMsg) *Raft {
 			}
 		}
 	}()
-	
+
 	return rf
 }
